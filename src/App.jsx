@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const keys = {
   localhost: "pk_54ttiop5dFTBOSTM",
-  "housepainter.konsumer.js.org": "pk_iFXgqInBzld9zPSu",
+  "konsumer.js.org": "pk_iFXgqInBzld9zPSu",
 };
 
 const params = new URLSearchParams({
