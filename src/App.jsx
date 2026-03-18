@@ -35,18 +35,36 @@ async function fetchPalette(hex, mode) {
 
 function ColorSwatch({ color, label }) {
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-2">
       <div
-        className="w-12 h-12 rounded border border-base-300 shadow"
+        className="w-16 h-16 rounded border-2 border-base-content/30 shadow-lg"
         style={{ background: color.hex }}
         title={color.name}
       />
-      <div className="text-xs text-base-content/60">{label}</div>
-      <div className="text-xs font-mono">{color.hex}</div>
-      <div className="text-xs text-center text-base-content/50">
+      <div className="badge badge-outline text-xs">{label}</div>
+      <div className="text-xs font-mono font-bold">{color.hex}</div>
+      <div className="text-xs text-center text-base-content/60 max-w-16 leading-tight">
         {color.name}
       </div>
     </div>
+  );
+}
+
+function HouseIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-10 h-10"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+      <path d="M9 21V12h6v9" />
+    </svg>
   );
 }
 
@@ -75,17 +93,38 @@ export default function App() {
 
   if (!localStorage.polykey) {
     return (
-      <div className="p-8">
-        <p>
-          This will allow you to see what your house looks like, in different
-          colors.
-        </p>
-        <a
-          href={`https://enter.pollinations.ai/authorize?${params}`}
-          className="btn btn-primary"
-        >
-          Login
-        </a>
+      <div
+        data-theme="cyberpunk"
+        className="min-h-screen bg-base-200 flex items-center justify-center p-6"
+      >
+        <div className="card w-full max-w-md bg-base-100 card-neon">
+          <div className="card-body items-center text-center gap-6">
+            <div className="text-primary">
+              <HouseIcon />
+            </div>
+            <div>
+              <h1 className="card-title text-3xl font-black tracking-tight justify-center text-primary">
+                HOUSEPAINTER
+              </h1>
+              <p className="text-base-content/50 text-sm mt-1 font-mono">
+                AI-powered exterior color visualizer
+              </p>
+            </div>
+            <div className="divider divider-primary my-0 opacity-30" />
+            <p className="text-base-content/70 leading-relaxed">
+              Upload a photo of your house and see how it looks in any color —
+              powered by AI image editing.
+            </p>
+            <div className="card-actions w-full">
+              <a
+                href={`https://enter.pollinations.ai/authorize?${params}`}
+                className="btn btn-primary w-full"
+              >
+                Connect with Pollinations
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -94,6 +133,7 @@ export default function App() {
     if (target?.files?.length) {
       imageFileSet(target.files[0]);
       imageInSet(URL.createObjectURL(target.files[0]));
+      imageOutSet(undefined);
     }
   };
 
@@ -152,164 +192,274 @@ export default function App() {
     (colorMode === "single" || (colorMode === "palette" && palette));
 
   return (
-    <div className="p-8 flex flex-col gap-6 max-w-2xl">
-      <div className="flex flex-col gap-1">
-        <div>Upload an image of your house</div>
-        <div>
-          <input
-            type="file"
-            className="file-input file-input-primary"
-            onChange={handleImageUpload}
-            accept="image/*"
-          />
+    <div data-theme="cyberpunk" className="min-h-screen bg-base-200">
+      {/* Header */}
+      <div
+        className="navbar bg-base-100 border-b border-primary/40 px-6"
+        style={{
+          boxShadow:
+            "0 1px 20px -4px color-mix(in oklch, var(--color-primary) 40%, transparent)",
+        }}
+      >
+        <div className="flex items-center gap-3 text-primary">
+          <HouseIcon />
+          <div>
+            <span className="text-xl font-black tracking-tight">
+              HOUSEPAINTER
+            </span>
+            <span className="text-xs text-base-content/40 block leading-none">
+              AI color visualizer
+            </span>
+          </div>
         </div>
       </div>
 
-      {imageIn && (
-        <>
-          <div>
-            <img
-              src={imageIn}
-              alt="Your house"
-              className="max-w-md rounded shadow"
-            />
-          </div>
-
-          {/* Mode toggle */}
-          <div className="flex flex-col gap-2">
-            <div className="font-medium">Color mode</div>
-            <div className="join">
-              <button
-                className={`join-item btn btn-sm ${colorMode === "single" ? "btn-primary" : "btn-outline"}`}
-                onClick={() => colorModeSet("single")}
-              >
-                Single Color
-              </button>
-              <button
-                className={`join-item btn btn-sm ${colorMode === "palette" ? "btn-primary" : "btn-outline"}`}
-                onClick={() => colorModeSet("palette")}
-              >
-                Palette
-              </button>
-            </div>
-          </div>
-
-          {/* Single color */}
-          {colorMode === "single" && (
-            <div className="flex flex-col gap-1">
-              <div>Choose a paint color</div>
-              <input
-                type="color"
-                value={colorIn}
-                onChange={(e) => colorInSet(e.target.value)}
-                className="input w-16 h-10 p-1 cursor-pointer"
-              />
-            </div>
-          )}
-
-          {/* Palette mode */}
-          {colorMode === "palette" && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <div>Seed color</div>
-                <input
-                  type="color"
-                  value={seedColor}
-                  onChange={(e) => {
-                    seedColorSet(e.target.value);
-                    paletteSet(null);
-                  }}
-                  className="input w-16 h-10 p-1 cursor-pointer"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <div>Color scheme style</div>
-                <select
-                  className="select select-bordered select-sm w-48"
-                  value={schemeMode}
-                  onChange={(e) => {
-                    schemeModeSet(e.target.value);
-                    paletteSet(null);
-                  }}
-                >
-                  {SCHEME_MODES.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <button
-                  className="btn btn-sm btn-secondary"
-                  onClick={handleFetchPalette}
-                  disabled={loadingPalette}
-                >
-                  {loadingPalette ? "Fetching..." : "Generate Palette"}
-                </button>
-              </div>
-
-              {palette && (
-                <div className="flex gap-6 items-start">
-                  <ColorSwatch color={palette[0]} label="Primary" />
-                  <ColorSwatch color={palette[1]} label="Secondary" />
-                  <ColorSwatch color={palette[2]} label="Trim" />
-                </div>
-              )}
-              <textarea
-                value={additionalPrompt}
-                onChange={(e) => additionalPromptSet(e.target.value)}
-                className="textarea"
-                placeholder="Additional prompt"
-              ></textarea>
-            </div>
-          )}
-
-          {error && (
-            <div role="alert" className="alert alert-error">
+      <div className="p-6 max-w-4xl mx-auto flex flex-col gap-6">
+        {/* Upload card */}
+        <div className="card bg-base-100 card-neon">
+          <div className="card-body gap-4">
+            <h2 className="card-title text-lg text-primary">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 shrink-0 stroke-current"
-                fill="none"
+                className="w-5 h-5"
                 viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="M21 15l-5-5L5 21" />
               </svg>
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePaint}
-              disabled={!canPaint}
-              className="btn btn-primary"
-            >
-              {painting ? "Painting..." : "PAINT"}
-            </button>
-            {colorMode === "palette" && !palette && (
-              <span className="text-sm text-base-content/50">
-                Generate a palette first
-              </span>
-            )}
-          </div>
-
-          {imageOut && (
-            <img
-              src={imageOut}
-              alt="Painted house"
-              className="w-full rounded shadow"
+              Upload Your House Photo
+            </h2>
+            <input
+              type="file"
+              className="file-input file-input-primary w-full"
+              onChange={handleImageUpload}
+              accept="image/*"
             />
-          )}
-        </>
-      )}
+          </div>
+        </div>
+
+        {imageIn && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left column: controls */}
+            <div className="flex flex-col gap-4">
+              {/* Color mode toggle */}
+              <div className="card bg-base-100 card-neon">
+                <div className="card-body gap-3">
+                  <h2 className="card-title text-base text-primary">
+                    Color Mode
+                  </h2>
+                  <div className="flex w-full gap-2">
+                    <button
+                      className={`btn flex-1 ${colorMode === "single" ? "btn-primary" : "btn-ghost border border-primary/30"}`}
+                      onClick={() => colorModeSet("single")}
+                    >
+                      Single Color
+                    </button>
+                    <button
+                      className={`btn flex-1 ${colorMode === "palette" ? "btn-primary" : "btn-ghost border border-primary/30"}`}
+                      onClick={() => colorModeSet("palette")}
+                    >
+                      Palette
+                    </button>
+                  </div>
+
+                  {/* Single color picker */}
+                  {colorMode === "single" && (
+                    <div className="flex items-center gap-4 pt-1">
+                      <label className="text-sm text-base-content/70 font-medium">
+                        Paint color
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={colorIn}
+                          onChange={(e) => colorInSet(e.target.value)}
+                          className="w-12 h-10 rounded cursor-pointer border border-base-content/20 bg-transparent p-0.5"
+                        />
+                        <span className="font-mono text-sm">
+                          {colorIn.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Palette mode */}
+                  {colorMode === "palette" && (
+                    <div className="flex flex-col gap-3 pt-1">
+                      <div className="flex items-center gap-4">
+                        <label className="text-sm text-base-content/70 font-medium">
+                          Seed color
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="color"
+                            value={seedColor}
+                            onChange={(e) => {
+                              seedColorSet(e.target.value);
+                              paletteSet(null);
+                            }}
+                            className="w-12 h-10 rounded cursor-pointer border border-base-content/20 bg-transparent p-0.5"
+                          />
+                          <span className="font-mono text-sm">
+                            {seedColor.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm text-base-content/70 font-medium">
+                          Scheme style
+                        </label>
+                        <select
+                          className="select select-bordered select-sm"
+                          value={schemeMode}
+                          onChange={(e) => {
+                            schemeModeSet(e.target.value);
+                            paletteSet(null);
+                          }}
+                        >
+                          {SCHEME_MODES.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <button
+                        className="btn btn-accent btn-sm"
+                        onClick={handleFetchPalette}
+                        disabled={loadingPalette}
+                      >
+                        {loadingPalette && (
+                          <span className="loading loading-spinner w-4 h-4" />
+                        )}
+                        {loadingPalette ? "Fetching…" : "Generate Palette"}
+                      </button>
+
+                      {palette && (
+                        <div className="flex justify-around items-start pt-2 border-t border-base-content/10">
+                          <ColorSwatch color={palette[0]} label="Primary" />
+                          <ColorSwatch color={palette[1]} label="Secondary" />
+                          <ColorSwatch color={palette[2]} label="Trim" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Additional prompt */}
+              <div className="card bg-base-100 card-neon">
+                <div className="card-body gap-2">
+                  <h2 className="card-title text-base text-primary">
+                    Additional Instructions
+                  </h2>
+                  <textarea
+                    value={additionalPrompt}
+                    onChange={(e) => additionalPromptSet(e.target.value)}
+                    className="textarea textarea-bordered w-full resize-none"
+                    placeholder="e.g. keep the shutters dark, make the door red…"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div role="alert" className="alert alert-error">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 shrink-0 stroke-current"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Paint button */}
+              <button
+                onClick={handlePaint}
+                disabled={!canPaint}
+                className="btn btn-primary btn-lg w-full"
+              >
+                {painting && (
+                  <span className="loading loading-spinner w-5 h-5" />
+                )}
+                {painting ? "Painting…" : "Paint My House"}
+              </button>
+              {colorMode === "palette" && !palette && (
+                <p className="text-xs text-base-content/40 text-center -mt-2">
+                  Generate a palette first
+                </p>
+              )}
+            </div>
+
+            {/* Right column: images */}
+            <div className="flex flex-col gap-4">
+              <div className="card bg-base-100 card-neon">
+                <div className="card-body gap-3 p-4">
+                  <h2 className="card-title text-base text-primary">
+                    Original
+                  </h2>
+                  <img
+                    src={imageIn}
+                    alt="Your house"
+                    className="rounded w-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {imageOut && (
+                <div className="card bg-base-100 card-neon-result">
+                  <div className="card-body gap-3 p-4">
+                    <h2 className="card-title text-base text-secondary">
+                      Result
+                    </h2>
+                    <img
+                      src={imageOut}
+                      alt="Painted house"
+                      className="rounded w-full object-cover"
+                    />
+                    <a
+                      href={imageOut}
+                      download="painted-house.jpg"
+                      className="btn btn-outline btn-primary btn-sm"
+                    >
+                      Download
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {painting && (
+                <div className="card bg-base-100 card-neon">
+                  <div className="card-body items-center gap-4 py-10">
+                    <span className="loading loading-ring loading-lg text-primary" />
+                    <p className="text-base-content/50 text-sm">
+                      AI is painting your house…
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
