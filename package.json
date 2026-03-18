@@ -1,0 +1,23 @@
+{
+  "name": "housepainter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "homepage": "https://konsumer.github.io/housepainter",
+  "scripts": {
+    "start": "vite --port 51730",
+    "build": "vite build",
+    "format": "npx -y prettier"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^0.0.0-insiders.f302fce",
+    "@vitejs/plugin-react": "^6.0.0",
+    "daisyui": "^5.5.19",
+    "tailwindcss": "^0.0.0-insiders.f302fce",
+    "vite": "^8.0.0"
+  }
+}
