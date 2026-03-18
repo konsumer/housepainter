@@ -6,7 +6,7 @@ const keys = {
 };
 
 const params = new URLSearchParams({
-  redirect_url: window.location.origin,
+  redirect_url: window.location.toString(),
   app_key: keys[window.location.hostname],
 });
 
