@@ -1,12 +1,18 @@
 import { useState } from "react";
 
-const MODEL = "gptimage";
+const MODEL = "flux-2-dev";
+// const MODEL = "gptimage";
 // const MODEL = "zimage";
 
 const keys = {
   localhost: "pk_35eJsWPDu2YQAeeW",
   "konsumer.js.org": "pk_5We7AuOGT3bdejcK",
 };
+
+// Cloudflare Worker URL for temporary image hosting.
+// Set this to your deployed worker URL after running: npx wrangler deploy
+// in the /worker directory. Leave empty to fall back to multipart POST.
+const IMAGE_HOST_WORKER = "https://housepainter-images.konsumer.workers.dev";
 
 const params = new URLSearchParams({
   redirect_url: window.location.toString(),
@@ -132,6 +138,9 @@ export default function App() {
   const handleImageUpload = ({ target }) => {
     if (target?.files?.length) {
       imageFileSet(target.files[0]);
+      // Revoke old blob URLs to avoid memory leaks
+      if (imageIn?.startsWith("blob:")) URL.revokeObjectURL(imageIn);
+      if (imageOut?.startsWith("blob:")) URL.revokeObjectURL(imageOut);
       imageInSet(URL.createObjectURL(target.files[0]));
       imageOutSet(undefined);
     }
@@ -159,30 +168,55 @@ export default function App() {
       prompt = `I want this house, repainted with this color scheme: primary walls in ${primary.hex} (${primary.name}), secondary surfaces in ${secondary.hex} (${secondary.name}), and trim/accents in ${trim.hex} (${trim.name})`;
     }
 
-    const formData = new FormData();
-    formData.append("prompt", (prompt + " " + additionalPrompt).trim());
-    formData.append("model", MODEL);
-    formData.append("image", imageFile, imageFile.name);
+    const fullPrompt = (prompt + " " + additionalPrompt).trim();
 
-    const editResponse = await fetch(
-      "https://gen.pollinations.ai/v1/images/edits",
-      {
+    try {
+      // Step 1: Upload the image to the temporary hosting worker to get a public URL.
+      // flux-2-dev (and similar community-provider models) need a public image URL
+      // rather than a multipart file upload.
+      const uploadForm = new FormData();
+      uploadForm.append("image", imageFile, imageFile.name);
+
+      const uploadRes = await fetch(`${IMAGE_HOST_WORKER}/upload`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.polykey}`,
-        },
-        body: formData,
-      },
-    ).then((r) => r.json());
+        body: uploadForm,
+      });
 
-    if (editResponse?.error) {
-      errorSet(editResponse?.error?.message);
-    } else {
-      const {
-        data: [{ b64_json }],
-      } = editResponse;
-      imageOutSet(`data:image/jpeg;base64,${b64_json}`);
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || `Upload failed (${uploadRes.status})`);
+      }
+
+      const { url: imageUrl } = await uploadRes.json();
+
+      // Step 2: Call the pollinations GET endpoint with the image URL.
+      // This is the same approach their "play" UI uses and works correctly
+      // with flux-2-dev which ignores multipart uploads via /v1/images/edits.
+      const pollinationsParams = new URLSearchParams({
+        model: MODEL,
+        width: "1024",
+        height: "1024",
+        seed: "-1",
+        enhance: "false",
+        image: imageUrl,
+        key: localStorage.polykey,
+      });
+
+      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const genUrl = `https://gen.pollinations.ai/image/${encodedPrompt}?${pollinationsParams}`;
+
+      const imgRes = await fetch(genUrl);
+      if (!imgRes.ok) {
+        throw new Error(`Generation failed (${imgRes.status})`);
+      }
+
+      // Response is a raw image binary (image/jpeg or image/png)
+      const blob = await imgRes.blob();
+      imageOutSet(URL.createObjectURL(blob));
+    } catch (err) {
+      errorSet(err.message || "Unknown error");
     }
+
     paintingSet(false);
   };
 
