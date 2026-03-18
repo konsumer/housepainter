@@ -110,10 +110,10 @@ export default function App() {
 
     let prompt;
     if (colorMode === "single") {
-      prompt = `I want this exact house, from the same angle and everything, but realistically painted the color ${colorIn}`;
+      prompt = `I want this house, repainted the color ${colorIn}`;
     } else {
       const [primary, secondary, trim] = palette;
-      prompt = `I want this exact house, from the same angle and everything, repainted with this color scheme: primary walls in ${primary.hex} (${primary.name}), secondary surfaces in ${secondary.hex} (${secondary.name}), and trim/accents in ${trim.hex} (${trim.name})`;
+      prompt = `I want this house, repainted with this color scheme: primary walls in ${primary.hex} (${primary.name}), secondary surfaces in ${secondary.hex} (${secondary.name}), and trim/accents in ${trim.hex} (${trim.name})`;
     }
 
     const formData = new FormData();
@@ -277,13 +277,11 @@ export default function App() {
           </div>
 
           {imageOut && (
-            <div>
-              <img
-                src={imageOut}
-                alt="Painted house"
-                className="max-w-md rounded shadow"
-              />
-            </div>
+            <img
+              src={imageOut}
+              alt="Painted house"
+              className="w-full rounded shadow"
+            />
           )}
         </>
       )}
