@@ -74,6 +74,10 @@ export default function App() {
   if (!localStorage.polykey) {
     return (
       <div className="p-8">
+        <p>
+          This will allow you to see what your house looks like, in different
+          colors.
+        </p>
         <a
           href={`https://enter.pollinations.ai/authorize?${params}`}
           className="btn btn-primary"
