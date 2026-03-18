@@ -5,7 +5,9 @@ import App from "./App.jsx";
 
 if (window?.location?.hash?.startsWith("#api_key=")) {
   localStorage.polykey = window.location.hash.replace("#api_key=", "");
-  window.location = window.location.replace(window.location.hash, "");
+  window.location = window.location
+    .toString()
+    .replace(window.location.hash, "");
 }
 
 createRoot(document.getElementById("root")).render(
