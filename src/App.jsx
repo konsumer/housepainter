@@ -71,6 +71,16 @@ function HouseIcon() {
   );
 }
 
+function buildSinglePrompt(color) {
+  return `I want this house, repainted the color ${color}`;
+}
+
+function buildPalettePrompt(palette) {
+  if (!palette) return "";
+  const [primary, secondary, trim] = palette;
+  return `I want this house, repainted with this color scheme: primary walls in ${primary.hex} (${primary.name}), secondary surfaces in ${secondary.hex} (${secondary.name}), and trim/accents in ${trim.hex} (${trim.name})`;
+}
+
 export default function App() {
   const [imageIn, imageInSet] = useState();
   const [imageFile, imageFileSet] = useState();
@@ -90,6 +100,7 @@ export default function App() {
   const [imageOut, imageOutSet] = useState();
   const [painting, paintingSet] = useState();
 
+  const [primaryPrompt, primaryPromptSet] = useState(buildSinglePrompt("#4a7c59"));
   const [additionalPrompt, additionalPromptSet] = useState("");
 
   const [error, errorSet] = useState("");
@@ -148,6 +159,7 @@ export default function App() {
     try {
       const colors = await fetchPalette(seedColor, schemeMode);
       paletteSet(colors);
+      primaryPromptSet(buildPalettePrompt(colors));
     } finally {
       loadingPaletteSet(false);
     }
@@ -157,15 +169,7 @@ export default function App() {
     paintingSet(true);
     errorSet("");
 
-    let prompt;
-    if (colorMode === "single") {
-      prompt = `I want this house, repainted the color ${colorIn}`;
-    } else {
-      const [primary, secondary, trim] = palette;
-      prompt = `I want this house, repainted with this color scheme: primary walls in ${primary.hex} (${primary.name}), secondary surfaces in ${secondary.hex} (${secondary.name}), and trim/accents in ${trim.hex} (${trim.name})`;
-    }
-
-    const fullPrompt = (prompt + " " + additionalPrompt).trim();
+    const fullPrompt = (primaryPrompt + " " + additionalPrompt).trim();
 
     try {
       // Step 1: Upload the image to litterbox.catbox.moe for a temporary public URL.
@@ -292,13 +296,19 @@ export default function App() {
                   <div className="flex w-full gap-2">
                     <button
                       className={`btn flex-1 ${colorMode === "single" ? "btn-primary" : "btn-ghost border border-primary/30"}`}
-                      onClick={() => colorModeSet("single")}
+                      onClick={() => {
+                        colorModeSet("single");
+                        primaryPromptSet(buildSinglePrompt(colorIn));
+                      }}
                     >
                       Single Color
                     </button>
                     <button
                       className={`btn flex-1 ${colorMode === "palette" ? "btn-primary" : "btn-ghost border border-primary/30"}`}
-                      onClick={() => colorModeSet("palette")}
+                      onClick={() => {
+                        colorModeSet("palette");
+                        primaryPromptSet(buildPalettePrompt(palette));
+                      }}
                     >
                       Palette
                     </button>
@@ -314,7 +324,10 @@ export default function App() {
                         <input
                           type="color"
                           value={colorIn}
-                          onChange={(e) => colorInSet(e.target.value)}
+                          onChange={(e) => {
+                            colorInSet(e.target.value);
+                            primaryPromptSet(buildSinglePrompt(e.target.value));
+                          }}
                           className="w-12 h-10 rounded cursor-pointer border border-base-content/20 bg-transparent p-0.5"
                         />
                         <span className="font-mono text-sm">
@@ -338,6 +351,7 @@ export default function App() {
                             onChange={(e) => {
                               seedColorSet(e.target.value);
                               paletteSet(null);
+                              primaryPromptSet("");
                             }}
                             className="w-12 h-10 rounded cursor-pointer border border-base-content/20 bg-transparent p-0.5"
                           />
@@ -357,6 +371,7 @@ export default function App() {
                           onChange={(e) => {
                             schemeModeSet(e.target.value);
                             paletteSet(null);
+                            primaryPromptSet("");
                           }}
                         >
                           {SCHEME_MODES.map((m) => (
@@ -387,6 +402,22 @@ export default function App() {
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Primary prompt */}
+              <div className="card bg-base-100 card-neon">
+                <div className="card-body gap-2">
+                  <h2 className="card-title text-base text-primary">
+                    Prompt
+                  </h2>
+                  <textarea
+                    value={primaryPrompt}
+                    onChange={(e) => primaryPromptSet(e.target.value)}
+                    className="textarea textarea-bordered w-full resize-none"
+                    placeholder="Describe what you want the AI to do…"
+                    rows={4}
+                  />
                 </div>
               </div>
 
