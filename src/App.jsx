@@ -9,10 +9,7 @@ const keys = {
   "konsumer.js.org": "pk_5We7AuOGT3bdejcK",
 };
 
-// Cloudflare Worker URL for temporary image hosting.
-// Set this to your deployed worker URL after running: npx wrangler deploy
-// in the /worker directory. Leave empty to fall back to multipart POST.
-const IMAGE_HOST_WORKER = "https://housepainter-images.konsumer.workers.dev";
+const LITTERBOX_API = "https://litterbox.catbox.moe/resources/internals/api.php";
 
 const params = new URLSearchParams({
   redirect_url: window.location.toString(),
@@ -171,23 +168,27 @@ export default function App() {
     const fullPrompt = (prompt + " " + additionalPrompt).trim();
 
     try {
-      // Step 1: Upload the image to the temporary hosting worker to get a public URL.
+      // Step 1: Upload the image to litterbox.catbox.moe for a temporary public URL.
       // flux-2-dev (and similar community-provider models) need a public image URL
       // rather than a multipart file upload.
       const uploadForm = new FormData();
-      uploadForm.append("image", imageFile, imageFile.name);
+      uploadForm.append("reqtype", "fileupload");
+      uploadForm.append("time", "1h");
+      uploadForm.append("fileToUpload", imageFile, imageFile.name);
 
-      const uploadRes = await fetch(`${IMAGE_HOST_WORKER}/upload`, {
+      const uploadRes = await fetch(LITTERBOX_API, {
         method: "POST",
         body: uploadForm,
       });
 
       if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({}));
-        throw new Error(err.error || `Upload failed (${uploadRes.status})`);
+        throw new Error(`Upload failed (${uploadRes.status})`);
       }
 
-      const { url: imageUrl } = await uploadRes.json();
+      const imageUrl = (await uploadRes.text()).trim();
+      if (!imageUrl.startsWith("https://")) {
+        throw new Error(`Unexpected upload response: ${imageUrl}`);
+      }
 
       // Step 2: Call the pollinations GET endpoint with the image URL.
       // This is the same approach their "play" UI uses and works correctly

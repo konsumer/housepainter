@@ -7,7 +7,7 @@
   "scripts": {
     "start": "vite --port 51730",
     "build": "vite build",
-    "format": "npx -y prettier"
+    "format": "npx -y prettier -w ."
   },
   "dependencies": {
     "react": "^19.2.4",
