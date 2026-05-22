@@ -4,7 +4,7 @@
 
 Upload a photo of your house and see it repainted in any color using AI.
 
-**Live demo:** https://konsumer.github.io/housepainter
+**Live demo:** https://konsumer.js.org/housepainter/
 
 ## Features
 
