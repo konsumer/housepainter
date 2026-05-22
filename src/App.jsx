@@ -1,8 +1,5 @@
 import { useState } from 'react'
 
-const MODEL = 'flux-2-dev'
-// const MODEL = "gptimage";
-// const MODEL = "zimage";
 
 const keys = {
   localhost: 'pk_35eJsWPDu2YQAeeW',
@@ -168,10 +165,9 @@ export default function App() {
       // This is the same approach their "play" UI uses and works correctly
       // with flux-2-dev which ignores multipart uploads via /v1/images/edits.
       const pollinationsParams = new URLSearchParams({
-        model: MODEL,
+        model: 'kontext',
         width: '1024',
         height: '1024',
-        seed: '-1',
         enhance: 'false',
         image: imageUrl,
         key: localStorage.polykey
